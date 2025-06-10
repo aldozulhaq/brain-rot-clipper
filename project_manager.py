@@ -111,6 +111,19 @@ class ProjectManager:
         return True
     
     @staticmethod
+    def load_transcription(project_id):
+        """Load the full transcription data with word timestamps."""
+        transcription_path = os.path.join(PROJECTS_DIR, project_id, "transcription.json")
+        print(f"Attempting to load transcription from: {os.path.realpath(transcription_path)}") # ADDED FOR DEBUGGING
+        if os.path.exists(transcription_path):
+            with open(transcription_path, "r") as f:
+                print("Transcription file found and loaded successfully.") 
+                return json.load(f)
+        else:
+            print("Transcription file NOT found.")
+            return None
+
+    @staticmethod
     def update_project_metadata(project_id, new_data):
         """Update metadata for a project."""
         metadata_path = os.path.join(PROJECTS_DIR, project_id, "metadata.json")

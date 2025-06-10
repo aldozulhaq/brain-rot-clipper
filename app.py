@@ -1,9 +1,12 @@
 from flask import Flask, render_template, request, jsonify, send_from_directory, Response
+import os
+import platform
+import subprocess
+os.environ["IMAGEMAGICK_BINARY"] = r"C:\Program Files\ImageMagick-7.1.1-Q16-HDRI\magick.exe"
 from project_manager import ProjectManager
 from downloader import download_video
 from transcriber import transcribe_video
 import yt_dlp
-import os
 import humanize
 import requests
 from dotenv import load_dotenv
@@ -13,8 +16,7 @@ import re
 from composer import compose_video_clip
 from clipper import cut_video_clip
 from werkzeug.utils import secure_filename
-import platform
-import subprocess
+
 
 load_dotenv()  # Load environment variables
 
@@ -336,7 +338,12 @@ def cut_clip_route():
 @app.route('/generate-clip', methods=['POST'])
 def generate_clip():
     data = request.json
-    project_id, start, end, title, layout = data.get('project_id'), data.get('start'), data.get('end'), data.get('title'), data.get('layout')
+    project_id = data.get('project_id')
+    start = data.get('start')
+    end = data.get('end')
+    title = data.get('title')
+    layout = data.get('layout')
+    subtitle_y = data.get('subtitle_y', 75) # Get subtitle position, default to 75%
 
     if not all([project_id, title, layout]) or start is None or end is None:
         return jsonify({"success": False, "message": "Missing required parameters."})
@@ -349,7 +356,10 @@ def generate_clip():
         secondary_asset_file = metadata.get('files', {}).get('secondary_asset')
 
         if layout not in ['full-primary'] and not secondary_asset_file:
-            return jsonify({"success": False, "message": "A secondary asset is required for this layout."})
+            # Adjusted logic to allow full-secondary without primary asset loaded,
+            # though it won't have audio. This is an edge case.
+             if layout != 'full-secondary':
+                return jsonify({"success": False, "message": "A secondary asset is required for this layout."})
         
         if not primary_video_file:
              return jsonify({"success": False, "message": "Primary video is missing."})
@@ -364,7 +374,16 @@ def generate_clip():
         safe_title = ProjectManager.sanitize_filename(title)
         output_filename = f"{safe_title}_{layout}_{int(float(start))}-{int(float(end))}.mp4"
 
-        clip_path = compose_video_clip(project_id, float(start), float(end), layout, output_filename, primary_video_path, secondary_asset_path)
+        clip_path = compose_video_clip(
+            project_id=project_id, 
+            start_time=float(start), 
+            end_time=float(end), 
+            layout=layout, 
+            output_filename=output_filename, 
+            primary_video_path=primary_video_path, 
+            secondary_asset_path=secondary_asset_path,
+            subtitle_y_percent=float(subtitle_y) # Pass subtitle position
+        )
         
         if clip_path:
             return jsonify({"success": True, "clip_path": clip_path.replace(os.path.sep, '/')})
@@ -372,6 +391,9 @@ def generate_clip():
             raise Exception("Composition failed. Check layout and asset paths.")
 
     except Exception as e:
+        # It's helpful to print the error to the console for debugging
+        import traceback
+        traceback.print_exc()
         return jsonify({"success": False, "message": f"Failed to generate clip: {str(e)}"})
 
 @app.route('/add-secondary-asset', methods=['POST'])

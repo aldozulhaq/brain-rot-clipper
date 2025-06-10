@@ -574,36 +574,42 @@
         }
 
         async function handleGenerateClip(event) {
-            const btn = event.currentTarget;
-            const statusEl = btn.parentElement.querySelector('.clip-status');
-            
-            const requiredAsset = !['full-primary', 'full-secondary'].includes(currentProject.layout);
-            const assetFile = document.getElementById('assetStatus').dataset.filename;
-            if (requiredAsset && !assetFile) {
-                alert("Please upload a secondary asset for this layout."); return;
-            }
-
-            btn.disabled = true;
-            statusEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Composing...';
-            try {
-                const response = await fetch('/generate-clip', { 
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        project_id: currentProject.id, start: btn.dataset.start, end: btn.dataset.end, title: btn.dataset.title, layout: currentProject.layout 
-                    })
-                });
-                const data = await response.json();
-                if (data.success) {
-                    statusEl.innerHTML = `✅ Composition Ready`;
-                    addGeneratedClip(data.clip_path, `[${currentProject.layout}] ${btn.dataset.title}`, data.clip_path.split('/').pop());
-                } else { throw new Error(data.message); }
-            } catch (error) {
-                statusEl.innerHTML = `<span class="error-text"><i class="fas fa-exclamation-triangle"></i> Error</span>`;
-            } finally {
-                btn.disabled = false;
-            }
+        const btn = event.currentTarget;
+        const statusEl = btn.parentElement.querySelector('.clip-status');
+        
+        const layoutRequiresSecondary = !['full-primary'].includes(currentProject.layout);
+        const assetFile = document.getElementById('assetStatus').dataset.filename;
+        if (layoutRequiresSecondary && !assetFile) {
+            alert("Please upload a secondary asset for this layout."); return;
         }
+
+        btn.disabled = true;
+        statusEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Composing...';
+        try {
+            const response = await fetch('/generate-clip', { 
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    project_id: currentProject.id, 
+                    start: btn.dataset.start, 
+                    end: btn.dataset.end, 
+                    title: btn.dataset.title, 
+                    layout: currentProject.layout,
+                    subtitle_y: currentProject.subtitleY
+                })
+            });
+            const data = await response.json();
+            if (data.success) {
+                statusEl.innerHTML = `✅ Composition Ready`;
+                addGeneratedClip(data.clip_path, `[${currentProject.layout}] ${btn.dataset.title}`, data.clip_path.split('/').pop());
+            } else { throw new Error(data.message); }
+        } catch (error) {
+            statusEl.innerHTML = `<span class="error-text"><i class="fas fa-exclamation-triangle"></i> Error: ${error.message}</span>`;
+            console.error("Error generating clip:", error);
+        } finally {
+            btn.disabled = false;
+        }
+    }
         
         function addGeneratedClip(clipPath, title, filename) {
             const container = document.getElementById('generatedClipsContainer');
