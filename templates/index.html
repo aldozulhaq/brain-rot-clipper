@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Brain Rot Clipper - YouTube Processor</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo"><i class="fas fa-brain"></i><h1>Brain Rot Clipper</h1></div>
+            <p class="subtitle">YouTube Video Processor for Podcast Clipping Pipeline</p>
+        </header>
+        
+        <main>
+            <!-- Project Selection View -->
+            <div id="projectSelectionView">
+                <div class="card">
+                    <div class="action-header"><h2><i class="fas fa-folder-plus"></i> New Project</h2></div>
+                    <div class="input-group">
+                        <input type="url" id="youtubeUrl" placeholder="Enter YouTube URL to start a new project...">
+                        <button id="extractBtn"><i class="fas fa-magic"></i> Create & Load</button>
+                    </div>
+                    <div class="loader" id="extractLoader" style="display:none;"><div class="spinner"></div><p>Creating project...</p></div>
+                </div>
+                <div class="card">
+                     <div class="action-header"><h2><i class="fas fa-folder-open"></i> Existing Projects</h2></div>
+                    <div id="projectList" class="project-list-grid"><p>Loading projects...</p></div>
+                </div>
+            </div>
+
+            <!-- Main Workspace View -->
+            <div id="mainWorkspaceView" style="display: none;">
+                <button id="backToProjectsBtn" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Projects</button>
+                <div class="card">
+                    <div class="action-header"><h2><i class="fas fa-info-circle"></i> Video Details</h2></div>
+                    <div class="video-container">
+                        <div class="thumbnail-container">
+                            <img id="thumbnail" class="thumbnail" src="" alt="Video Thumbnail">
+                            <div class="duration" id="duration"></div>
+                        </div>
+                        <div>
+                            <h3 id="title"></h3>
+                            <!-- RESTORED METADATA GRID -->
+                            <div class="metadata">
+                                <div class="meta-card"><div class="meta-title">Channel</div><div class="meta-value" id="channel"></div></div>
+                                <div class="meta-card"><div class="meta-title">Views</div><div class="meta-value" id="views"></div></div>
+                                <div class="meta-card"><div class="meta-title">Upload Date</div><div class="meta-value" id="uploadDate"></div></div>
+                                <div class="meta-card"><div class="meta-title">Resolution</div><div class="meta-value" id="resolution"></div></div>
+                                <div class="meta-card"><div class="meta-title">Project ID</div><div class="meta-value" id="projectId"></div></div>
+                            </div>
+                            <div id="downloadStatus" style="margin-top: 1rem;">
+                                <div class="status-checking status-badge" id="statusChecking" style="display: none;"><i class="fas fa-sync fa-spin"></i><span>Checking...</span></div>
+                                <div class="status-downloaded status-badge" id="statusDownloaded" style="display: none;"><i class="fas fa-check-circle"></i><span>Video Downloaded</span></div>
+                                <div class="status-not-downloaded status-badge" id="statusNotDownloaded" style="display: none;"><i class="fas fa-exclamation-circle"></i><span>Video Not Downloaded</span></div>
+                            </div>
+                            <button id="downloadBtn" style="margin-top: 1.5rem;"><i class="fas fa-download"></i> Download Video</button>
+                            <div class="loader" id="downloadLoader" style="display: none; margin-top: 1.5rem;"><div class="spinner"></div><p>Downloading video...</p></div>
+                        </div>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+                    
+                    <div class="action-header">
+                        <h2><i class="fas fa-file-alt"></i> Transcription</h2>
+                        <button class="redo-btn" id="redoTranscribeBtn" style="display: none;">
+                            <i class="fas fa-sync"></i> Redo Transcription
+                        </button>
+                    </div>
+                    
+                    <div id="transcriptionStatus">
+                        <div class="status-downloaded status-badge" id="statusTranscribed" style="display: none;">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Transcription Available</span>
+                        </div>
+                        <div class="status-not-downloaded status-badge" id="statusNotTranscribed" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>Transcription Not Available</span>
+                        </div>
+                    </div>
+                    
+                    <button id="transcribeBtn" style="margin-top: 1.5rem; display: none;">
+                        <i class="fas fa-wave-square"></i> Transcribe Audio
+                    </button>
+                    <div class="loader" id="transcribeLoader" style="display: none; margin-top: 1.5rem;">
+                        <div class="spinner"></div>
+                        <p>Transcribing audio... This may take several minutes</p>
+                    </div>
+                    
+                    <div id="transcriptionResult" class="transcription-container" style="display: none; margin-top: 1.5rem;">
+                        <h3><i class="fas fa-scroll"></i> Transcript</h3>
+                        <div class="transcription-content" id="transcriptionContent"></div>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+                    
+                    <div class="action-header">
+                        <h2><i class="fas fa-virus"></i> Viral Moments Detection</h2>
+                        <button class="redo-btn" id="redoViralBtn" style="display: none;">
+                            <i class="fas fa-sync"></i> Redo Detection
+                        </button>
+                    </div>
+                    
+                    <div id="viralStatus">
+                        <div class="status-downloaded status-badge" id="statusViralDetected" style="display: none;">
+                            <i class="fas fa-check-circle"></i>
+                            <span>Viral Moments Detected</span>
+                        </div>
+                        <div class="status-not-downloaded status-badge" id="statusNotViralDetected" style="display: none;">
+                            <i class="fas fa-exclamation-circle"></i>
+                            <span>No Viral Moments Detected</span>
+                        </div>
+                    </div>
+                    
+                    <button id="detectViralBtn" style="margin-top: 1.5rem; display: none;">
+                        <i class="fas fa-bolt"></i> Detect Viral Moments
+                    </button>
+                    <div class="loader" id="viralLoader" style="display: none; margin-top: 1.5rem;">
+                        <div class="spinner"></div>
+                        <p>Identifying viral moments... This may take 1-2 minutes</p>
+                    </div>
+                    
+                    <div id="viralResults" class="viral-container" style="display: none; margin-top: 1.5rem;">
+                        <h3><i class="fas fa-fire"></i> Top Viral Moments</h3>
+                        <div class="viral-moments" id="viralMoments"></div>
+                    </div>
+                    
+                    <div class="section-divider"></div>
+
+                    <div class="action-header">
+                        <h2><i class="fas fa-photo-video"></i> Secondary Asset</h2>
+                    </div>
+
+                    <div class="secondary-asset-container">
+                        <div id="assetStatus"></div>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="assetInput" accept="video/*,image/*" style="display: none;">
+                            <label for="assetInput" class="file-input-label"><i class="fas fa-folder-open"></i> Choose File...</label>
+                            <span id="assetFilename">No file selected</span>
+                        </div>
+                        <button id="uploadAssetBtn" style="margin-top: 1rem;" disabled><i class="fas fa-upload"></i> Upload Asset</button>
+                        <div class="loader" id="assetUploadLoader" style="display: none; margin-top: 1rem;">
+                            <div class="spinner"></div><p>Uploading asset...</p>
+                        </div>
+                    </div>
+
+                    <div id="layoutSection" style="display: none;">
+                        <div class="section-divider"></div>
+                        <div class="action-header"><h2><i class="fas fa-layer-group"></i> Clip Layout & Composition</h2></div>
+                        <div class="composition-container">
+                            <div class="composition-controls">
+                                <h3>Layout Style</h3>
+                                <div class="layout-picker">
+                                    <button data-layout="primary-top" class="layout-btn active"><div class="layout-preview-icon"><div class="icon-vid1"></div><div class="icon-vid2"></div></div><span>Vid 1 on Top</span></button>
+                                    <button data-layout="primary-bottom" class="layout-btn"><div class="layout-preview-icon"><div class="icon-vid2"></div><div class="icon-vid1"></div></div><span>Vid 1 on Bottom</span></button>
+                                    <button data-layout="primary-small-top" class="layout-btn"><div class="layout-preview-icon layout-small-top"><div class="icon-vid1"></div><div class="icon-vid2"></div></div><span>Vid 1 Small Top</span></button>
+                                    <button data-layout="primary-portrait-fill" class="layout-btn"><div class="layout-preview-icon layout-portrait-fill"><div class="icon-vid1"></div></div><span>Portrait Fill</span></button>
+                                    <button data-layout="full-primary" class="layout-btn"><div class="layout-preview-icon layout-full-screen"><div class="icon-vid1"></div></div><span>Full Vid 1 (9:16)</span></button>
+                                    <button data-layout="full-secondary" class="layout-btn"><div class="layout-preview-icon layout-full-screen"><div class="icon-vid2"></div></div><span>Full Vid 2 (9:16)</span></button>
+                                </div>
+                                <h3 style="margin-top: 2rem;">Subtitle Position</h3>
+                                <p class="control-description">Adjust vertical position of subtitles.</p>
+                                <div class="slider-container">
+                                    <input type="range" min="5" max="90" value="45" class="slider" id="subtitleSlider">
+                                    <span id="sliderValue">45%</span>
+                                </div>
+                            </div>
+                            <div class="composition-preview-area">
+                                <div id="previewContainer" class="preview-container">
+                                    <div id="topVideoSlot" class="video-slot"><div id="topVideoContent" class="video-content"><div class="video-content-inner">Vid 1</div></div></div>
+                                    <div id="bottomVideoSlot" class="video-slot"><div id="bottomVideoContent" class="video-content"><div class="video-content-inner">Vid 2</div></div></div>
+                                    <div id="subtitlePreview" class="subtitle-preview">Your Subtitles Here</div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div id="cutClipsResult" style="margin-top: 2rem; display: none;">
+                        <div class="action-header">
+                            <h3><i class="fas fa-film"></i> Generated Clips</h3>
+                            <button id="showClipsFolderBtn" class="show-folder-btn"><i class="fas fa-folder"></i> Show in Folder</button>
+                        </div>
+                        <div id="generatedClipsContainer" class="generated-clips-grid"></div>
+                    </div>
+
+                </div>
+            </div>
+        </main>
+        
+        <footer class="footer">
+            <p>Brain Rot Clipper - Local Processing Pipeline | All processing happens on your machine</p>
+        </footer>
+    </div>
+
+    <script>
+        // Global state
+        let currentProject = { id: null, youtubeUrl: null, layout: 'primary-top', subtitleY: 45 };
+
+        // DOM Elements
+        const projectSelectionView = document.getElementById('projectSelectionView');
+        const mainWorkspaceView = document.getElementById('mainWorkspaceView');
+        const previewContainer = document.getElementById('previewContainer');
+        const topVideoSlot = document.getElementById('topVideoSlot');
+        const bottomVideoSlot = document.getElementById('bottomVideoSlot');
+        const subtitlePreview = document.getElementById('subtitlePreview');
+        const subtitleSlider = document.getElementById('subtitleSlider');
+
+        // --- View Management & Project Loading ---
+        function showProjectSelectionView() {
+            projectSelectionView.style.display = 'block';
+            mainWorkspaceView.style.display = 'none';
+            document.getElementById('youtubeUrl').value = '';
+            loadProjectsList();
+        }
+        function showWorkspaceView() {
+            projectSelectionView.style.display = 'none';
+            mainWorkspaceView.style.display = 'block';
+        }
+        async function loadProjectsList() {
+            const container = document.getElementById('projectList');
+            container.innerHTML = '<div class="spinner"></div>';
+            try {
+                const response = await fetch('/projects');
+                const data = await response.json();
+                if (data.success && data.projects.length > 0) {
+                    container.innerHTML = '';
+                    data.projects.forEach(proj => {
+                        const card = document.createElement('div');
+                        card.className = 'project-card';
+                        card.dataset.projectId = proj.project_id;
+                        card.innerHTML = `<h4>${proj.title}</h4><p>${proj.project_id}</p>`;
+                        card.addEventListener('click', () => loadProject(proj.project_id));
+                        container.appendChild(card);
+                    });
+                } else {
+                    container.innerHTML = '<p>No projects found. Create one above!</p>';
+                }
+            } catch (e) { container.innerHTML = '<p class="error-text">Could not load projects.</p>'; }
+        }
+        async function loadProject(projectId) {
+            mainWorkspaceView.classList.add('loading');
+            try {
+                const response = await fetch(`/project/${projectId}`);
+                const data = await response.json();
+                if (data.success) {
+                    populateWorkspace(data.project_data);
+                    showWorkspaceView();
+                } else { alert('Error loading project: ' + data.message); }
+            } catch (e) { alert('Connection error loading project.'); }
+            finally { mainWorkspaceView.classList.remove('loading'); }
+        }
+
+        // --- Workspace Population ---
+        function populateWorkspace(data) {
+            currentProject.id = data.project_id;
+            currentProject.youtubeUrl = data.youtube_url;
+            
+            // Populate Details
+            document.getElementById('title').textContent = data.title;
+            document.getElementById('projectId').textContent = data.project_id;
+            document.getElementById('thumbnail').src = `/project-files/${data.project_id}/thumbnail.jpg?t=${new Date().getTime()}`;
+            document.getElementById('duration').textContent = data.duration_formatted || '';
+            document.getElementById('channel').textContent = data.channel || 'N/A';
+            document.getElementById('views').textContent = data.views_formatted || 'N/A';
+            document.getElementById('uploadDate').textContent = data.upload_date_formatted || 'N/A';
+            document.getElementById('resolution').textContent = data.resolution || 'N/A';
+            
+            // --- Status Indicators ---
+            document.getElementById('statusChecking').style.display = 'none'; // Hide checker
+            document.getElementById('downloadBtn').style.display = data.downloaded ? 'none' : 'block';
+            document.getElementById('statusDownloaded').style.display = data.downloaded ? 'flex' : 'none';
+            document.getElementById('statusNotDownloaded').style.display = !data.downloaded ? 'flex' : 'none';
+
+            document.getElementById('transcribeBtn').style.display = (data.downloaded && !data.transcribed) ? 'block' : 'none';
+            document.getElementById('redoTranscribeBtn').style.display = data.transcribed ? 'block' : 'none';
+            document.getElementById('statusTranscribed').style.display = data.transcribed ? 'flex' : 'none';
+            document.getElementById('statusNotTranscribed').style.display = !data.transcribed ? 'flex' : 'none';
+            document.getElementById('transcriptionResult').style.display = data.transcribed ? 'block' : 'none';
+            if (data.transcribed) loadTranscription();
+
+            document.getElementById('detectViralBtn').style.display = (data.transcribed && !data.viral_detected) ? 'block' : 'none';
+            document.getElementById('redoViralBtn').style.display = data.viral_detected ? 'block' : 'none';
+            document.getElementById('statusViralDetected').style.display = data.viral_detected ? 'flex' : 'none';
+            document.getElementById('statusNotViralDetected').style.display = !data.viral_detected ? 'flex' : 'none';
+            document.getElementById('viralResults').style.display = data.viral_detected ? 'block' : 'none';
+            if (data.viral_detected) loadViralMoments(); else document.getElementById('viralMoments').innerHTML = '';
+
+            updateAssetStatusUI(data.secondary_asset_file);
+            document.getElementById('layoutSection').style.display = data.downloaded ? 'block' : 'none';
+            
+            // Existing Clips
+            const clipsContainer = document.getElementById('generatedClipsContainer');
+            clipsContainer.innerHTML = '';
+            document.getElementById('cutClipsResult').style.display = (data.existing_clips && data.existing_clips.length > 0) ? 'block' : 'none';
+            (data.existing_clips || []).forEach(clip => addGeneratedClip(clip.path, clip.title, clip.filename));
+            
+            setLayout(currentProject.layout); // Ensure layout preview is correct
+        }
+
+        // --- Layout Preview & Slider Logic (RESTORED) ---
+        function setLayout(layout) {
+            currentProject.layout = layout;
+            document.querySelectorAll('.layout-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.layout-btn[data-layout="${layout}"]`).classList.add('active');
+            updateLayoutPreview();
+        }
+        function updateLayoutPreview() {
+            const { layout, subtitleY } = currentProject;
+            previewContainer.className = 'preview-container';
+            previewContainer.setAttribute('data-preview-layout', layout);
+            if (layout === 'full-primary') previewContainer.classList.add('vid1-bg');
+            if (layout === 'full-secondary') previewContainer.classList.add('vid2-bg');
+            
+            subtitlePreview.style.bottom = `${subtitleY}%`;
+            document.getElementById('sliderValue').textContent = `${subtitleY}%`;
+            subtitleSlider.value = subtitleY;
+        }
+        document.querySelectorAll('.layout-btn').forEach(btn => btn.addEventListener('click', () => setLayout(btn.dataset.layout)));
+        subtitleSlider.addEventListener('input', (e) => {
+            currentProject.subtitleY = e.target.value;
+            updateLayoutPreview();
+        });
+        
+        // --- Event Listeners ---
+        document.addEventListener('DOMContentLoaded', showProjectSelectionView);
+        document.getElementById('backToProjectsBtn').addEventListener('click', showProjectSelectionView);
+
+        extractBtn.addEventListener('click', async () => {
+            const url = document.getElementById('youtubeUrl').value;
+            if (!url) { alert('Please enter a YouTube URL.'); return; }
+
+            extractLoader.style.display = 'block';
+            extractBtn.disabled = true;
+
+            try {
+                const response = await fetch('/extract-info', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    populateWorkspace(data.project_data);
+                    showWorkspaceView();
+                } else {
+                    alert('Error: ' + data.message);
+                }
+            } catch (error) {
+                alert('Connection error: ' + error.message);
+            } finally {
+                extractLoader.style.display = 'none';
+                extractBtn.disabled = false;
+            }
+        });
+        
+        document.getElementById('downloadBtn').addEventListener('click', async () => {
+            if (!currentProject.id) return;
+            const btn = document.getElementById('downloadBtn');
+            const loader = document.getElementById('downloadLoader');
+            loader.style.display = 'block';
+            btn.disabled = true;
+            try {
+                const response = await fetch('/download', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: currentProject.youtubeUrl, project_id: currentProject.id })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    loadProject(currentProject.id); // Reload project state
+                } else { throw new Error(data.message); }
+            } catch (error) {
+                alert("Download failed: " + error.message);
+            } finally {
+                loader.style.display = 'none';
+                btn.disabled = false;
+            }
+        });
+        
+        async function checkTranscriptionStatus() {
+            if (!currentProject.id) return;
+            try {
+                const response = await fetch(`/transcription-status/${currentProject.id}`);
+                const data = await response.json();
+                if (data.success && data.transcribed) {
+                    loadProject(currentProject.id);
+                    return true;
+                }
+                return false;
+            } catch (error) { return false; }
+        }
+
+        async function handleTranscription(isRedo = false) {
+            if (!currentProject.id) return;
+            const loader = document.getElementById('transcribeLoader');
+            const transcribeBtn = document.getElementById('transcribeBtn');
+            const redoBtn = document.getElementById('redoTranscribeBtn');
+
+            loader.style.display = 'block';
+            transcribeBtn.style.display = 'none';
+            redoBtn.style.display = 'none';
+
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: currentProject.id, redo: isRedo }) // Pass the flag
+                });
+                const data = await response.json();
+                if (data.success) {
+                    // Start polling for completion
+                    const pollInterval = setInterval(async () => {
+                        const res = await fetch(`/transcription-status/${currentProject.id}`);
+                        const statusData = await res.json();
+                        if (statusData.transcribed) {
+                            clearInterval(pollInterval);
+                            loadProject(currentProject.id); // Reload project to update UI
+                        }
+                    }, 5000);
+                } else { throw new Error(data.message); }
+            } catch (error) {
+                alert("Transcription failed: " + error.message);
+                loader.style.display = 'none';
+                // Restore buttons based on state
+                loadProject(currentProject.id);
+            }
+        }
+        
+        // Initial transcription button
+        document.getElementById('transcribeBtn').addEventListener('click', () => handleTranscription(false));
+        
+        // New redo transcription button
+        document.getElementById('redoTranscribeBtn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to re-transcribe this video? The existing transcript will be replaced.')) {
+                handleTranscription(true);
+            }
+        });
+        
+        // New redo viral moments button
+        document.getElementById('redoViralBtn').addEventListener('click', () => {
+             if (confirm('Are you sure you want to re-detect viral moments? The existing list will be replaced.')) {
+                handleViralDetection(); // This function naturally overwrites, so no flag needed
+            }
+        });
+
+        document.getElementById('transcribeBtn').addEventListener('click', async () => {
+            if (!currentProject.id) return;
+            const btn = document.getElementById('transcribeBtn');
+            const loader = document.getElementById('transcribeLoader');
+            loader.style.display = 'block';
+            btn.style.display = 'none';
+            try {
+                const response = await fetch('/transcribe', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: currentProject.id })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    const pollInterval = setInterval(async () => {
+                        if (await checkTranscriptionStatus()) clearInterval(pollInterval);
+                    }, 5000);
+                } else { throw new Error(data.message); }
+            } catch (error) {
+                alert("Transcription failed: " + error.message);
+                loader.style.display = 'none';
+                btn.style.display = 'block';
+            }
+        });
+        
+        async function loadTranscription() {
+            if (!currentProject.id) return;
+            try {
+                const response = await fetch(`/project-files/${currentProject.id}/transcription.txt`);
+                document.getElementById('transcriptionContent').textContent = await response.text();
+            } catch (error) {
+                document.getElementById('transcriptionContent').textContent = "Failed to load transcription";
+            }
+        }
+        
+        const handleViralDetection = async () => {
+             if (!currentProject.id) return;
+            const loader = document.getElementById('viralLoader');
+            const btn = document.getElementById('detectViralBtn');
+            loader.style.display = 'block';
+            btn.style.display = 'none';
+            
+            const viralResultsContainer = document.getElementById('viralResults');
+            const viralMomentsContainer = document.getElementById('viralMoments');
+            viralResultsContainer.style.display = 'block';
+            viralMomentsContainer.innerHTML = `<pre id="aiStreamOutput" class="ai-stream-output"></pre>`;
+            const streamOutputEl = document.getElementById('aiStreamOutput');
+
+            try {
+                const response = await fetch('/detect-viral-moments', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ project_id: currentProject.id })
+                });
+
+                if (!response.ok) throw new Error(`Server error: ${response.status}`);
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+                    streamOutputEl.textContent += decoder.decode(value, { stream: true });
+                }
+                loadProject(currentProject.id); // Reload after stream finishes
+            } catch (error) {
+                streamOutputEl.textContent = `Detection failed: ${error.message}`;
+            } finally {
+                loader.style.display = 'none';
+            }
+        };
+        document.getElementById('detectViralBtn').addEventListener('click', handleViralDetection);
+
+        async function loadViralMoments() {
+            if (!currentProject.id) return;
+            try {
+                const response = await fetch(`/project-files/${currentProject.id}/viral_moments.json?t=${new Date().getTime()}`);
+                if (!response.ok) throw new Error('File not found');
+                const data = await response.json();
+                const container = document.getElementById('viralMoments');
+                container.innerHTML = '';
+                (data.clips || []).forEach(clip => {
+                    const clipEl = document.createElement('div');
+                    clipEl.className = 'viral-clip';
+                    const safeTitle = clip.title.replace(/"/g, '"').replace("/'/g, '''");
+                    clipEl.innerHTML = `
+                        <div class="clip-header"><h4>${clip.title}</h4></div>
+                        <p>${clip.description}</p>
+                        <div class="clip-actions">
+                             <button class="preview-clip-btn" data-start="${clip.start}" data-end="${clip.end}" data-title="${safeTitle}"><i class="fas fa-eye"></i> Preview</button>
+                             <button class="generate-clip-btn" data-start="${clip.start}" data-end="${clip.end}" data-title="${safeTitle}"><i class="fas fa-magic"></i> Compose</button>
+                             <div class="clip-status"></div>
+                        </div>`;
+                    container.appendChild(clipEl);
+                });
+                document.querySelectorAll('.preview-clip-btn').forEach(btn => btn.addEventListener('click', handlePreviewClip));
+                document.querySelectorAll('.generate-clip-btn').forEach(btn => btn.addEventListener('click', handleGenerateClip));
+            } catch (error) {
+                document.getElementById('viralMoments').innerHTML = `<p>Could not load viral moments.</p>`;
+            }   
+        }
+        
+        async function handlePreviewClip(event) {
+            const btn = event.currentTarget;
+            const statusEl = btn.parentElement.querySelector('.clip-status');
+            btn.disabled = true;
+            statusEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Cutting...';
+            try {
+                const response = await fetch('/cut-clip', { 
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        project_id: currentProject.id, start: btn.dataset.start, end: btn.dataset.end, title: btn.dataset.title,
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    statusEl.innerHTML = `✅ Preview Ready`;
+                    addGeneratedClip(data.clip_path, `[PREVIEW] ${btn.dataset.title}`, data.clip_path.split('/').pop());
+                } else { throw new Error(data.message); }
+            } catch (error) {
+                statusEl.innerHTML = `<span class="error-text"><i class="fas fa-exclamation-triangle"></i> Error</span>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        async function handleGenerateClip(event) {
+            const btn = event.currentTarget;
+            const statusEl = btn.parentElement.querySelector('.clip-status');
+            
+            const requiredAsset = !['full-primary', 'full-secondary'].includes(currentProject.layout);
+            const assetFile = document.getElementById('assetStatus').dataset.filename;
+            if (requiredAsset && !assetFile) {
+                alert("Please upload a secondary asset for this layout."); return;
+            }
+
+            btn.disabled = true;
+            statusEl.innerHTML = '<i class="fas fa-sync fa-spin"></i> Composing...';
+            try {
+                const response = await fetch('/generate-clip', { 
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        project_id: currentProject.id, start: btn.dataset.start, end: btn.dataset.end, title: btn.dataset.title, layout: currentProject.layout 
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    statusEl.innerHTML = `✅ Composition Ready`;
+                    addGeneratedClip(data.clip_path, `[${currentProject.layout}] ${btn.dataset.title}`, data.clip_path.split('/').pop());
+                } else { throw new Error(data.message); }
+            } catch (error) {
+                statusEl.innerHTML = `<span class="error-text"><i class="fas fa-exclamation-triangle"></i> Error</span>`;
+            } finally {
+                btn.disabled = false;
+            }
+        }
+        
+        function addGeneratedClip(clipPath, title, filename) {
+            const container = document.getElementById('generatedClipsContainer');
+            const card = document.createElement('div');
+            card.className = 'generated-clip-card';
+            card.id = `clip-card-${filename.replace(/[^\w-]/g, '')}`; // Make ID JS-safe
+            card.innerHTML = `<video controls preload="metadata" src="/project-files/${clipPath}#t=0.1"></video><div class="clip-card-info"><p class="clip-card-title">${title}</p><div class="clip-card-actions"><a href="/project-files/${clipPath}" download class="download-clip-btn" title="Download"><i class="fas fa-download"></i></a><button class="delete-clip-btn" title="Delete Clip"><i class="fas fa-trash"></i></button></div></div>`;
+            container.prepend(card);
+            card.querySelector('.delete-clip-btn').addEventListener('click', () => deleteClip(filename));
+        }
+        
+        async function deleteClip(filename) {
+            if (!confirm(`Are you sure you want to permanently delete ${filename}?`)) return;
+            try {
+                const response = await fetch('/delete-clip', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ project_id: currentProject.id, filename: filename })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    document.getElementById(`clip-card-${filename.replace(/[^\w-]/g, '')}`).remove();
+                } else { throw new Error(data.message); }
+            } catch (error) { alert('Error deleting clip: ' + error.message); }
+        }
+        
+        document.getElementById('showClipsFolderBtn').addEventListener('click', async () => {
+             await fetch('/show-in-folder', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ project_id: currentProject.id })
+            });
+        });
+
+        // --- Asset Management ---
+        const assetInput = document.getElementById('assetInput');
+        assetInput.addEventListener('change', () => {
+            if (assetInput.files.length > 0) {
+                document.getElementById('assetFilename').textContent = assetInput.files[0].name;
+                document.getElementById('uploadAssetBtn').disabled = false;
+            }
+        });
+        document.getElementById('uploadAssetBtn').addEventListener('click', async () => {
+            if (!currentProject.id || assetInput.files.length === 0) return;
+            const btn = document.getElementById('uploadAssetBtn');
+            const loader = document.getElementById('assetUploadLoader');
+            btn.disabled = true;
+            loader.style.display = 'block';
+
+            const formData = new FormData();
+            formData.append('project_id', currentProject.id);
+            formData.append('file', assetInput.files[0]);
+            try {
+                const response = await fetch('/add-secondary-asset', { method: 'POST', body: formData });
+                const data = await response.json();
+                if (data.success) { updateAssetStatusUI(data.filename); } 
+                else { throw new Error(data.message); }
+            } catch (error) {
+                alert('Upload failed: ' + error.message);
+            } finally {
+                btn.disabled = false;
+                loader.style.display = 'none';
+            }
+        });
+
+        function updateAssetStatusUI(filename) {
+            const assetStatusEl = document.getElementById('assetStatus');
+            if (filename) {
+                assetStatusEl.innerHTML = `<div class="status-downloaded status-badge"><span>Asset: <strong>${filename}</strong></span></div>`;
+                assetStatusEl.dataset.filename = filename;
+            } else {
+                assetStatusEl.innerHTML = `<div class="status-not-downloaded status-badge"><span>No secondary asset added yet.</span></div>`;
+                assetStatusEl.dataset.filename = '';
+            }
+            assetInput.value = '';
+            document.getElementById('assetFilename').textContent = 'No file selected';
+            document.getElementById('uploadAssetBtn').disabled = true;
+        }
+
+        document.getElementById('extractBtn').addEventListener('click', async () => {
+            const url = document.getElementById('youtubeUrl').value;
+            if (!url) { alert('Please enter a YouTube URL.'); return; }
+            const btn = document.getElementById('extractBtn');
+            const loader = document.getElementById('extractLoader');
+            loader.style.display = 'block';
+            btn.disabled = true;
+            try {
+                const response = await fetch('/extract-info', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ url }) });
+                const data = await response.json();
+                if (data.success) {
+                    populateWorkspace(data.project_data);
+                    showWorkspaceView();
+                } else { alert('Error: ' + data.message); }
+            } catch (error) { alert('Connection error: ' + error.message); }
+            finally { loader.style.display = 'none'; btn.disabled = false; }
+        });
+
+        // --- Layout Picker ---
+        document.querySelectorAll('.layout-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                currentProject.layout = btn.dataset.layout;
+                document.querySelectorAll('.layout-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            });
+        });
+
+        function checkAndShowLayoutSection(isDownloaded) {
+            document.getElementById('layoutSection').style.display = isDownloaded ? 'block' : 'none';
+        }
+    </script>
+</body>
+</html>

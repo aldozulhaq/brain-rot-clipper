@@ -1,0 +1,28 @@
+# --- User-Generated Data & Large Files ---
+# This is the most important rule! Never track user projects.
+projects/
+
+# --- Environment Variables & Secrets ---
+# Never commit your API keys or other secrets.
+.env
+
+# --- Python Cache & Virtual Environments ---
+# Standard Python files to ignore.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Common virtual environment folder names
+venv/
+env/
+.venv/
+*/.venv/
+
+# --- OS-Specific & Launcher Files ---
+# Log and PID files from the macOS/Linux launchers
+server.log
+server.pid
+
+# macOS-specific system files
+.DS_Store

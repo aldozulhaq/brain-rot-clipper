@@ -1,0 +1,9 @@
+flask
+yt-dlp
+humanize
+requests
+python-dotenv
+werkzeug
+faster-whisper
+moviepy
+waitress
